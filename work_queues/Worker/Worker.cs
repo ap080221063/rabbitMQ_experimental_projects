@@ -33,16 +33,14 @@ namespace workerProgram{
 
                 MessageToReceive messageDto = JsonSerializer.Deserialize<MessageToReceive>(message);
 
-                Console.WriteLine($"[✅] Received at {messageDto.CreateTimestamp}");
-                
-                Console.WriteLine($"[✅] From {messageDto.From}");
-                
+                Console.WriteLine("  ");
+                Console.WriteLine($"[✅] Received at {messageDto.CreateTimestamp}");               
+                Console.WriteLine($"[✅] From {messageDto.From}");          
                 Console.WriteLine($"[✅] Content {messageDto.Content}");
 
                 int dots = message.Split('.').Length - 1;
                 Thread.Sleep(dots * 1000);
 
-                Console.WriteLine(" [x] Done");
             };
 
             channel.BasicConsume(queue: "work_queues",
