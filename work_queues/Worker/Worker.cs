@@ -18,10 +18,12 @@ namespace workerProgram{
             using var channel = connection.CreateModel();
 
             channel.QueueDeclare(queue: "work_queues",
-                     durable: false,
+                     durable: true,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
+
+            channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
 
             Console.WriteLine(" [ℹ️] Waiting for messages.");
 
@@ -39,7 +41,7 @@ namespace workerProgram{
                 //simulate disruption
                 if(random == 0)
                 {
-                    Console.WriteLine($"worker nack'ed, requeuing.. {messageDto.Content}");
+                    Console.WriteLine($"[❌]worker nack'ed, requeuing.. {messageDto.Content}");
                     channel.BasicNack(deliveryTag: ea.DeliveryTag, false, true);
                 }
                 else
@@ -51,7 +53,7 @@ namespace workerProgram{
                     Console.WriteLine($"[✅] Content {messageDto.Content}");
 
                     int dots = message.Split('.').Length - 1;
-                    Thread.Sleep(dots * 1000);
+                    Thread.Sleep(dots * 3000);
 
                     channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
                 }
