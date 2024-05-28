@@ -18,10 +18,12 @@ namespace workerProgram{
             using var channel = connection.CreateModel();
 
             channel.QueueDeclare(queue: "work_queues",
-                     durable: false,
+                     durable: true,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
+
+            channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
 
             Console.WriteLine(" [ℹ️] Waiting for messages.");
 
@@ -33,18 +35,33 @@ namespace workerProgram{
 
                 MessageToReceive messageDto = JsonSerializer.Deserialize<MessageToReceive>(message);
 
-                Console.WriteLine("  ");
-                Console.WriteLine($"[✅] Received at {messageDto.CreateTimestamp}");               
-                Console.WriteLine($"[✅] From {messageDto.From}");          
-                Console.WriteLine($"[✅] Content {messageDto.Content}");
+                Random r = new Random();
+                var random = r.Next(0,2);
+                //Console.WriteLine("random="+random);
+                //simulate disruption
+                if(random == 0)
+                {
+                    Console.WriteLine($"[❌]worker nack'ed, requeuing.. {messageDto.Content}");
+                    channel.BasicNack(deliveryTag: ea.DeliveryTag, false, true);
+                }
+                else
+                {
 
-                int dots = message.Split('.').Length - 1;
-                Thread.Sleep(dots * 1000);
+                    Console.WriteLine("  ");
+                    Console.WriteLine($"[✅] Received at {messageDto.CreateTimestamp}");               
+                    Console.WriteLine($"[✅] From {messageDto.From}");          
+                    Console.WriteLine($"[✅] Content {messageDto.Content}");
 
+                    int dots = message.Split('.').Length - 1;
+                    Thread.Sleep(dots * 3000);
+
+                    channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+                }
             };
 
-            channel.BasicConsume(queue: "work_queues",
-            autoAck: true,
+            channel.BasicConsume(
+            queue: "work_queues",
+            autoAck: false,
             consumer: consumer);
 
             Console.WriteLine(" Press [enter] to exit.");

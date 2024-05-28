@@ -17,7 +17,7 @@ namespace producerProgram{
             
             //declare a queue
             channel.QueueDeclare(queue: "work_queues",
-                     durable: false,
+                     durable: true,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
@@ -29,9 +29,12 @@ namespace producerProgram{
 
             stateMessage = "Sending work item";
             try{
+                var properties = channel.CreateBasicProperties();
+                properties.Persistent = true;
+
                 channel.BasicPublish(exchange: string.Empty,
                         routingKey: "work_queues",
-                        basicProperties: null,
+                        basicProperties: properties,
                         body: body);
             }catch(Exception ex){
                 Console.WriteLine(ex);
